@@ -4,54 +4,67 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f172a" />
-  <title>מחשבון עבודה נוספת</title>
-  <link rel="stylesheet" href="styles.css?v=0.0.3" />
+  <title>מחשבון כדאיות שעות נוספות</title>
+  <link rel="stylesheet" href="styles.css?v=0.0.4" />
 </head>
 <body>
   <div class="app-shell">
     <header class="hero">
       <div>
         <p class="eyebrow">ממש פנסיוני</p>
-        <h1>מחשבון עבודה נוספת</h1>
-        <p class="subtitle">חשב מס לפי שכר ראשי, וראה כמה ברוטו ושעות צריך בעבודה שנייה כדי להגיע ליעד נטו.</p>
+        <h1>מתי להפסיק שעות נוספות?</h1>
+        <p class="subtitle">בדוק כמה בת הזוג צריכה להרוויח כדי לכסות את הנטו שאתה מפסיד אם אתה מוותר על שעות נוספות.</p>
       </div>
-      <span class="version-badge" id="versionBadge">v0.0.3</span>
+      <span class="version-badge" id="versionBadge">v0.0.4</span>
     </header>
 
     <main class="grid">
-      <section class="card input-card" aria-labelledby="gross-title">
-        <h2 id="gross-title">נתוני חישוב</h2>
+      <section class="card input-card" aria-labelledby="input-title">
+        <h2 id="input-title">נתוני החלטה</h2>
 
-        <label for="grossSalary">משכורת ברוטו חודשית בעבודה הראשית</label>
-        <div class="money-input"><span>₪</span><input id="grossSalary" inputmode="numeric" type="number" min="0" step="100" value="50000" /></div>
+        <label for="baseSalary">השכר שלך בלי שעות נוספות</label>
+        <div class="money-input"><span>₪</span><input id="baseSalary" inputmode="numeric" type="number" min="0" step="100" value="20000" /></div>
 
-        <label for="targetNet" class="mt">יעד נטו נוסף שרוצים לקבל</label>
-        <div class="money-input"><span>₪</span><input id="targetNet" inputmode="numeric" type="number" min="0" step="100" value="10000" /></div>
+        <label for="overtimeGross" class="mt">ברוטו שעות נוספות שאתה שוקל לוותר עליו</label>
+        <div class="money-input"><span>₪</span><input id="overtimeGross" inputmode="numeric" type="number" min="0" step="100" value="20000" /></div>
 
-        <label for="hourlyRate" class="mt">שכר שעתי ברוטו בעבודה השנייה</label>
-        <div class="money-input"><span>₪</span><input id="hourlyRate" inputmode="numeric" type="number" min="1" step="5" value="150" /></div>
+        <label for="spouseBaseSalary" class="mt">שכר נוכחי של בת הזוג</label>
+        <div class="money-input"><span>₪</span><input id="spouseBaseSalary" inputmode="numeric" type="number" min="0" step="100" value="0" /></div>
 
-        <button id="calculateBtn" type="button">חשב עכשיו</button>
-        <p class="note">החישוב כולל מס הכנסה בלבד, לפני נקודות זיכוי, ביטוח לאומי, מס בריאות, פנסיה ותיאום מס.</p>
+        <label for="spouseHourlyRate" class="mt">שכר שעתי ברוטו של בת הזוג</label>
+        <div class="money-input"><span>₪</span><input id="spouseHourlyRate" inputmode="numeric" type="number" min="1" step="5" value="100" /></div>
+
+        <button id="calculateBtn" type="button">חשב נקודת איזון</button>
+        <p class="note">החישוב כולל מס הכנסה בלבד, לפני נקודות זיכוי, ביטוח לאומי, מס בריאות, פנסיה ותיאום מס. מיועד להשוואה כלכלית ראשונית.</p>
       </section>
 
-      <section class="card summary-card" aria-label="תוצאות מס">
-        <div class="result-row"><span>מס הכנסה על העבודה הראשית</span><strong id="totalTax">₪0</strong></div>
-        <div class="result-row"><span>נטו אחרי מס הכנסה בלבד</span><strong id="netAfterTax">₪0</strong></div>
-        <div class="result-row"><span>מס שולי נוכחי</span><strong id="marginalTax">0%</strong></div>
-        <div class="result-row"><span>שיעור מס ממוצע</span><strong id="averageTax">0%</strong></div>
+      <section class="card summary-card danger-card" aria-label="שעות נוספות שלך">
+        <h2>אם אתה מוותר על שעות נוספות</h2>
+        <div class="result-row"><span>ברוטו שאתה מוותר עליו</span><strong id="lostGross">₪0</strong></div>
+        <div class="result-row"><span>מס שנחסך לך</span><strong id="savedTax">₪0</strong></div>
+        <div class="result-row big"><span>נטו שהמשפחה מאבדת</span><strong id="lostNet">₪0</strong></div>
+        <div class="result-row"><span>מס שולי שלך אחרי בסיס</span><strong id="yourMarginalTax">0%</strong></div>
       </section>
 
-      <section class="card summary-card accent-card" aria-label="עבודה שנייה">
-        <h2>עבודה שנייה</h2>
-        <div class="result-row"><span>ברוטו נוסף נדרש</span><strong id="requiredGross">₪0</strong></div>
-        <div class="result-row"><span>מס על העבודה השנייה</span><strong id="secondJobTax">₪0</strong></div>
-        <div class="result-row"><span>נטו נוסף בפועל</span><strong id="secondJobNet">₪0</strong></div>
-        <div class="result-row"><span>שעות עבודה נדרשות</span><strong id="requiredHours">0</strong></div>
+      <section class="card summary-card accent-card" aria-label="בת הזוג">
+        <h2>כמה בת הזוג צריכה להכניס?</h2>
+        <div class="result-row big"><span>ברוטו נדרש ממנה</span><strong id="spouseRequiredGross">₪0</strong></div>
+        <div class="result-row"><span>מס על ההכנסה שלה</span><strong id="spouseTax">₪0</strong></div>
+        <div class="result-row"><span>נטו שהיא מכסה</span><strong id="spouseNet">₪0</strong></div>
+        <div class="result-row"><span>שעות נדרשות לפי שכר שעתי</span><strong id="spouseHours">0</strong></div>
+      </section>
+
+      <section class="card decision-card details-card">
+        <div class="section-title"><h2>נקודת האיזון</h2><span>גרסה v0.0.4</span></div>
+        <p id="decisionText" class="decision-text">חשב כדי לראות מתי משתלם להחליף שעות נוספות בעבודה של בת הזוג.</p>
+        <div class="compare-box">
+          <div><span>נטו לכל 1,000 ₪ שעות נוספות שלך</span><strong id="yourNetPer1000">₪0</strong></div>
+          <div><span>נטו לכל 1,000 ₪ של בת הזוג</span><strong id="spouseNetPer1000">₪0</strong></div>
+        </div>
       </section>
 
       <section class="card details-card">
-        <div class="section-title"><h2>פירוט לפי מדרגות</h2><span>גרסה v0.0.3</span></div>
+        <div class="section-title"><h2>פירוט מס שלך לפי מדרגות</h2><span>כולל השעות הנוספות</span></div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>מדרגה</th><th>חלק חייב</th><th>מס</th></tr></thead>
@@ -62,6 +75,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=0.0.3"></script>
+  <script src="app.js?v=0.0.4"></script>
 </body>
 </html>
