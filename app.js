@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.0.4";
+const APP_VERSION = "v0.0.5";
 
 const TAX_BRACKETS_2026 = [
   { from: 0, to: 7010, rate: 0.10 },
@@ -14,19 +14,16 @@ const els = {
   baseSalary: document.getElementById("baseSalary"),
   overtimeGross: document.getElementById("overtimeGross"),
   spouseBaseSalary: document.getElementById("spouseBaseSalary"),
-  spouseHourlyRate: document.getElementById("spouseHourlyRate"),
   calculateBtn: document.getElementById("calculateBtn"),
-  lostGross: document.getElementById("lostGross"),
-  savedTax: document.getElementById("savedTax"),
+  spouseRequiredTotalGross: document.getElementById("spouseRequiredTotalGross"),
+  spouseRequiredExtraGross: document.getElementById("spouseRequiredExtraGross"),
   lostNet: document.getElementById("lostNet"),
-  yourMarginalTax: document.getElementById("yourMarginalTax"),
-  spouseRequiredGross: document.getElementById("spouseRequiredGross"),
+  savedTax: document.getElementById("savedTax"),
   spouseTax: document.getElementById("spouseTax"),
   spouseNet: document.getElementById("spouseNet"),
-  spouseHours: document.getElementById("spouseHours"),
+  yourOvertimeNet: document.getElementById("yourOvertimeNet"),
+  yourMarginalTax: document.getElementById("yourMarginalTax"),
   decisionText: document.getElementById("decisionText"),
-  yourNetPer1000: document.getElementById("yourNetPer1000"),
-  spouseNetPer1000: document.getElementById("spouseNetPer1000"),
   taxBreakdown: document.getElementById("taxBreakdown"),
   versionBadge: document.getElementById("versionBadge"),
 };
@@ -36,13 +33,6 @@ function formatCurrency(value) {
     style: "currency",
     currency: "ILS",
     maximumFractionDigits: 0,
-  }).format(Math.max(0, value));
-}
-
-function formatNumber(value, digits = 1) {
-  return new Intl.NumberFormat("he-IL", {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: digits,
   }).format(Math.max(0, value));
 }
 
@@ -99,42 +89,34 @@ function render() {
   const baseSalary = Number(els.baseSalary.value || 0);
   const overtimeGross = Number(els.overtimeGross.value || 0);
   const spouseBaseSalary = Number(els.spouseBaseSalary.value || 0);
-  const spouseHourlyRate = Number(els.spouseHourlyRate.value || 0);
 
   const fullYourGross = baseSalary + overtimeGross;
   const baseTax = calculateTax(baseSalary).totalTax;
   const fullTaxResult = calculateTax(fullYourGross);
   const overtimeTax = Math.max(0, fullTaxResult.totalTax - baseTax);
   const overtimeNet = Math.max(0, overtimeGross - overtimeTax);
-  const spouseRequiredGross = grossNeededForTargetNet(spouseBaseSalary, overtimeNet);
-  const spouseTax = calculateIncrementalTax(spouseBaseSalary, spouseRequiredGross);
-  const spouseNet = Math.max(0, spouseRequiredGross - spouseTax);
-  const spouseHours = spouseHourlyRate > 0 ? spouseRequiredGross / spouseHourlyRate : 0;
 
-  const yourNetPer1000 = netFromExtraGross(baseSalary, 1000);
-  const spouseNetPer1000 = netFromExtraGross(spouseBaseSalary, 1000);
-  const spouseEffectiveRate = spouseRequiredGross > 0 ? spouseNet / spouseRequiredGross : 0;
+  const spouseRequiredExtraGross = grossNeededForTargetNet(spouseBaseSalary, overtimeNet);
+  const spouseRequiredTotalGross = spouseBaseSalary + spouseRequiredExtraGross;
+  const spouseTax = calculateIncrementalTax(spouseBaseSalary, spouseRequiredExtraGross);
+  const spouseNet = Math.max(0, spouseRequiredExtraGross - spouseTax);
 
-  els.lostGross.textContent = formatCurrency(overtimeGross);
-  els.savedTax.textContent = formatCurrency(overtimeTax);
+  els.spouseRequiredTotalGross.textContent = formatCurrency(spouseRequiredTotalGross);
+  els.spouseRequiredExtraGross.textContent = formatCurrency(spouseRequiredExtraGross);
   els.lostNet.textContent = formatCurrency(overtimeNet);
-  els.yourMarginalTax.textContent = `${Math.round(fullTaxResult.marginalRate * 100)}%`;
-
-  els.spouseRequiredGross.textContent = formatCurrency(spouseRequiredGross);
+  els.savedTax.textContent = formatCurrency(overtimeTax);
   els.spouseTax.textContent = formatCurrency(spouseTax);
   els.spouseNet.textContent = formatCurrency(spouseNet);
-  els.spouseHours.textContent = `${formatNumber(spouseHours, 1)} שעות`;
-
-  els.yourNetPer1000.textContent = formatCurrency(yourNetPer1000);
-  els.spouseNetPer1000.textContent = formatCurrency(spouseNetPer1000);
+  els.yourOvertimeNet.textContent = formatCurrency(overtimeNet);
+  els.yourMarginalTax.textContent = `${Math.round(fullTaxResult.marginalRate * 100)}%`;
   els.versionBadge.textContent = APP_VERSION;
 
   if (overtimeNet <= 0) {
-    els.decisionText.textContent = "אין כרגע נטו להחלפה כי לא הוזן ברוטו שעות נוספות.";
-  } else if (spouseHourlyRate <= 0) {
-    els.decisionText.textContent = `כדי לכסות ${formatCurrency(overtimeNet)} נטו, בת הזוג צריכה להרוויח ${formatCurrency(spouseRequiredGross)} ברוטו.`;
+    els.decisionText.textContent = "הכנס ברוטו שעות נוספות כדי לחשב את השכר הנדרש לבת הזוג.";
+  } else if (spouseBaseSalary > 0) {
+    els.decisionText.textContent = `כדי להחליף ${formatCurrency(overtimeNet)} נטו שאתה מפסיד, בת הזוג צריכה להגיע לשכר ברוטו חודשי של ${formatCurrency(spouseRequiredTotalGross)}. כלומר תוספת של ${formatCurrency(spouseRequiredExtraGross)} מעל השכר הנוכחי שלה.`;
   } else {
-    els.decisionText.textContent = `נקודת האיזון: אם אתה מוותר על ${formatCurrency(overtimeGross)} ברוטו שעות נוספות, המשפחה מאבדת ${formatCurrency(overtimeNet)} נטו. כדי לכסות את זה, בת הזוג צריכה להרוויח ${formatCurrency(spouseRequiredGross)} ברוטו, שהם בערך ${formatNumber(spouseHours, 1)} שעות לפי ${formatCurrency(spouseHourlyRate)} לשעה. נטו אפקטיבי שלה: ${Math.round(spouseEffectiveRate * 100)}% מהברוטו.`;
+    els.decisionText.textContent = `כדי להחליף ${formatCurrency(overtimeNet)} נטו שאתה מפסיד, בת הזוג צריכה להרוויח שכר ברוטו חודשי של ${formatCurrency(spouseRequiredTotalGross)}.`;
   }
 
   els.taxBreakdown.innerHTML = fullTaxResult.rows.map((row) => `
@@ -146,6 +128,6 @@ function render() {
   `).join("");
 }
 
-els.calculateBtn.addEventListener("click", render);
-[els.baseSalary, els.overtimeGross, els.spouseBaseSalary, els.spouseHourlyRate].forEach((input) => input.addEventListener("input", render));
+els.calculateBtn?.addEventListener("click", render);
+[els.baseSalary, els.overtimeGross, els.spouseBaseSalary].forEach((input) => input.addEventListener("input", render));
 render();
