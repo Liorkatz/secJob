@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>מחשבון עבודה נוספת</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">ממש פנסיוני</p>
+        <h1>מחשבון מס לשכר ברוטו</h1>
+        <p class="subtitle">הזן שכר ברוטו חודשי וקבל פירוט לפי מדרגות מס הכנסה.</p>
+      </div>
+      <span class="version-badge" id="versionBadge">v0.0.1</span>
+    </header>
+
+    <main class="grid">
+      <section class="card input-card" aria-labelledby="gross-title">
+        <h2 id="gross-title">נתוני שכר</h2>
+        <label for="grossSalary">משכורת ברוטו חודשית</label>
+        <div class="money-input">
+          <span>₪</span>
+          <input id="grossSalary" inputmode="numeric" type="number" min="0" step="100" value="50000" />
+        </div>
+        <button id="calculateBtn" type="button">חשב עכשיו</button>
+        <p class="note">החישוב לפי מדרגות מס הכנסה חודשיות לשנת 2026, לפני נקודות זיכוי, ביטוח לאומי, מס בריאות והפרשות.</p>
+      </section>
+
+      <section class="card summary-card" aria-label="תוצאות מס">
+        <div class="result-row">
+          <span>מס הכנסה חודשי</span>
+          <strong id="totalTax">₪0</strong>
+        </div>
+        <div class="result-row">
+          <span>נטו אחרי מס הכנסה בלבד</span>
+          <strong id="netAfterTax">₪0</strong>
+        </div>
+        <div class="result-row">
+          <span>מס שולי נוכחי</span>
+          <strong id="marginalTax">0%</strong>
+        </div>
+        <div class="result-row">
+          <span>שיעור מס ממוצע</span>
+          <strong id="averageTax">0%</strong>
+        </div>
+      </section>
+
+      <section class="card details-card">
+        <div class="section-title">
+          <h2>פירוט לפי מדרגות</h2>
+          <span id="updatedAt">עודכן: 03/07/2026</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>מדרגה</th>
+                <th>חלק חייב</th>
+                <th>מס</th>
+              </tr>
+            </thead>
+            <tbody id="taxBreakdown"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
