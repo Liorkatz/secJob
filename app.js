@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.0.2";
+const APP_VERSION = "v0.0.3";
 
 const TAX_BRACKETS_2026 = [
   { from: 0, to: 7010, rate: 0.10 },
