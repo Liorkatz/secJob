@@ -28,10 +28,19 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Prepare static site
+        run: |
+          rm -rf _site
+          mkdir _site
+          cp index.html app.js styles.css _site/
+          touch _site/.nojekyll
+          echo "Static site contents:"
+          find _site -maxdepth 1 -type f -print
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
