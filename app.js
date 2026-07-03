@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.0.1";
+const APP_VERSION = "v0.0.2";
 
 const TAX_BRACKETS_2026 = [
   { from: 0, to: 7010, rate: 0.10 },
@@ -12,11 +12,17 @@ const TAX_BRACKETS_2026 = [
 
 const els = {
   grossSalary: document.getElementById("grossSalary"),
+  targetNet: document.getElementById("targetNet"),
+  hourlyRate: document.getElementById("hourlyRate"),
   calculateBtn: document.getElementById("calculateBtn"),
   totalTax: document.getElementById("totalTax"),
   netAfterTax: document.getElementById("netAfterTax"),
   marginalTax: document.getElementById("marginalTax"),
   averageTax: document.getElementById("averageTax"),
+  requiredGross: document.getElementById("requiredGross"),
+  secondJobTax: document.getElementById("secondJobTax"),
+  secondJobNet: document.getElementById("secondJobNet"),
+  requiredHours: document.getElementById("requiredHours"),
   taxBreakdown: document.getElementById("taxBreakdown"),
   versionBadge: document.getElementById("versionBadge"),
 };
@@ -30,10 +36,9 @@ function formatCurrency(value) {
 }
 
 function formatRange(bracket) {
-  const from = bracket.from + 1;
   if (!Number.isFinite(bracket.to)) return `מעל ${formatCurrency(bracket.from)}`;
   if (bracket.from === 0) return `עד ${formatCurrency(bracket.to)}`;
-  return `${formatCurrency(from)}–${formatCurrency(bracket.to)}`;
+  return `${formatCurrency(bracket.from + 1)}–${formatCurrency(bracket.to)}`;
 }
 
 function calculateTax(gross) {
@@ -42,48 +47,71 @@ function calculateTax(gross) {
   const rows = TAX_BRACKETS_2026.map((bracket) => {
     const taxablePart = Math.max(0, Math.min(gross, bracket.to) - bracket.from);
     const tax = taxablePart * bracket.rate;
-
-    if (gross > bracket.from && taxablePart > 0) {
-      marginalRate = bracket.rate;
-    }
-
+    if (gross > bracket.from && taxablePart > 0) marginalRate = bracket.rate;
     totalTax += tax;
-
-    return {
-      range: formatRange(bracket),
-      taxablePart,
-      tax,
-      rate: bracket.rate,
-      active: taxablePart > 0,
-    };
+    return { range: formatRange(bracket), taxablePart, tax, rate: bracket.rate, active: taxablePart > 0 };
   });
-
   return { totalTax, marginalRate, rows };
+}
+
+function calculateIncrementalTax(baseGross, extraGross) {
+  const baseTax = calculateTax(baseGross).totalTax;
+  const combinedTax = calculateTax(baseGross + extraGross).totalTax;
+  return Math.max(0, combinedTax - baseTax);
+}
+
+function grossNeededForTargetNet(baseGross, targetNet) {
+  if (targetNet <= 0) return 0;
+  let low = 0;
+  let high = targetNet * 2;
+
+  while (high - calculateIncrementalTax(baseGross, high) < targetNet) {
+    high *= 2;
+    if (high > 10000000) break;
+  }
+
+  for (let i = 0; i < 60; i++) {
+    const mid = (low + high) / 2;
+    const net = mid - calculateIncrementalTax(baseGross, mid);
+    if (net >= targetNet) high = mid;
+    else low = mid;
+  }
+
+  return high;
 }
 
 function render() {
   const gross = Number(els.grossSalary.value || 0);
+  const targetNet = Number(els.targetNet.value || 0);
+  const hourlyRate = Number(els.hourlyRate.value || 0);
   const { totalTax, marginalRate, rows } = calculateTax(gross);
   const net = Math.max(0, gross - totalTax);
   const averageRate = gross > 0 ? totalTax / gross : 0;
+
+  const requiredGross = grossNeededForTargetNet(gross, targetNet);
+  const secondTax = calculateIncrementalTax(gross, requiredGross);
+  const secondNet = Math.max(0, requiredGross - secondTax);
+  const hours = hourlyRate > 0 ? requiredGross / hourlyRate : 0;
 
   els.totalTax.textContent = formatCurrency(totalTax);
   els.netAfterTax.textContent = formatCurrency(net);
   els.marginalTax.textContent = `${Math.round(marginalRate * 100)}%`;
   els.averageTax.textContent = `${(averageRate * 100).toFixed(1)}%`;
+  els.requiredGross.textContent = formatCurrency(requiredGross);
+  els.secondJobTax.textContent = formatCurrency(secondTax);
+  els.secondJobNet.textContent = formatCurrency(secondNet);
+  els.requiredHours.textContent = `${hours.toFixed(1)} שעות`;
   els.versionBadge.textContent = APP_VERSION;
 
-  els.taxBreakdown.innerHTML = rows
-    .map((row) => `
-      <tr class="${row.active ? "active" : ""}">
-        <td>${row.range}<br><small>${Math.round(row.rate * 100)}%</small></td>
-        <td>${formatCurrency(row.taxablePart)}</td>
-        <td>${formatCurrency(row.tax)}</td>
-      </tr>
-    `)
-    .join("");
+  els.taxBreakdown.innerHTML = rows.map((row) => `
+    <tr class="${row.active ? "active" : ""}">
+      <td>${row.range}<br><small>${Math.round(row.rate * 100)}%</small></td>
+      <td>${formatCurrency(row.taxablePart)}</td>
+      <td>${formatCurrency(row.tax)}</td>
+    </tr>
+  `).join("");
 }
 
 els.calculateBtn.addEventListener("click", render);
-els.grossSalary.addEventListener("input", render);
+[els.grossSalary, els.targetNet, els.hourlyRate].forEach((input) => input.addEventListener("input", render));
 render();
